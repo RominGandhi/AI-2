@@ -56,33 +56,33 @@ def backtrack(assignment, csp):
         return assignment
 
     x = mrv(assignment, csp)
-    if x is None:
-        return False
-
-    domain_copy = list(csp.D[csp.X.index(x)])
-    for v in domain_copy:
+    csp_orig = deepcopy(csp)
+    for v in list(csp.D[csp.X.index(x)]):  # Use a copy of the domain set
+        inferences = {}
         if csp.is_consistent(x, v):
-            # Temporarily assign this value
             assignment[x] = v
-            csp.D[csp.X.index(x)] = {v}
-
-            # Make inferences using forward checking
             inferences = forward_check(assignment, csp, x, v)
-            if inferences is not False:
+            if isinstance(inferences, dict):
                 assignment.update(inferences)
                 result = backtrack(assignment, csp)
-                if result:
+                if isinstance(result, dict):
                     return result
 
-            # Undo assignment and inferences
+        # Safely remove the variable from the assignment
+        if x in assignment:
             del assignment[x]
-            for inferred_var in inferences:
-                del assignment[inferred_var]
 
-        # Restore domain
-        csp.D[csp.X.index(x)] = set(domain_copy)
+        # Safely remove inferred variables from the assignment
+        if isinstance(inferences, dict):
+            for i in inferences:
+                if i in assignment:
+                    del assignment[i]
+
+        # Restore the original CSP state
+        csp = deepcopy(csp_orig)
 
     return False
+
 
 
 
